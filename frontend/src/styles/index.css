@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply font-body bg-slate-50 text-slate-900 antialiased;
+  margin: 0;
+}
+
+.dark body {
+  @apply bg-slate-950 text-slate-100;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.glow-bg {
+  background:
+    radial-gradient(circle at 20% 15%, rgba(14, 165, 233, 0.22), transparent 40%),
+    radial-gradient(circle at 85% 20%, rgba(249, 115, 22, 0.2), transparent 35%),
+    radial-gradient(circle at 30% 95%, rgba(16, 185, 129, 0.16), transparent 35%);
+}
