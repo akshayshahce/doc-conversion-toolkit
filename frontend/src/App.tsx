@@ -383,7 +383,7 @@ export default function App() {
 
           <footer className="mt-6 rounded-3xl border border-white/50 bg-white/70 px-5 py-4 text-sm text-slate-600 shadow-xl backdrop-blur dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-300">
             Developed by: <span className="font-semibold text-slate-900 dark:text-slate-100">Akshay Shah</span>{' '}
-            (<a className="text-brand-700 underline-offset-2 hover:underline dark:text-brand-300" href="mailto:akshayshah.ce@gmail.com">akshayshah.ce@gmail.com</a>)
+            (<a className="text-brand-700 underline-offset-2 hover:underline dark:text-brand-300" href="mailto:akshayshah.ce@gmail.com">Akshayshah.ce@gmail.com</a>)
           </footer>
         </div>
       </div>

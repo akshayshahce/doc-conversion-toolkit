@@ -36,7 +36,7 @@ This project is designed so a non-technical person can start it with one command
 
 1. Download or unzip the project folder.
 2. Open the project folder.
-3. Double-click [`start.command`](/Users/akshay/Documents/GitHub/doc-conversion-toolkit/start.command)
+3. Double-click [`start.command`]
 
 If macOS blocks it the first time:
 
@@ -48,7 +48,7 @@ If macOS blocks it the first time:
 
 1. Download or unzip the project folder.
 2. Open the project folder.
-3. Double-click [`start.bat`](/Users/akshay/Documents/GitHub/doc-conversion-toolkit/start.bat)
+3. Double-click [`start.bat`]
 
 ## What the startup script does
 
@@ -100,7 +100,7 @@ You can still use the same startup file:
 ### macOS
 
 ```bash
-/Users/akshay/Documents/GitHub/doc-conversion-toolkit/start.command
+start.command
 ```
 
 ### Windows
