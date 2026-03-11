@@ -49,11 +49,16 @@ brew_prefix_for() {
 
 ensure_python() {
   if command -v python3 >/dev/null 2>&1; then
-    return 0
+    local py_major py_minor
+    py_major="$(python3 -c 'import sys; print(sys.version_info.major)' 2>/dev/null || echo 0)"
+    py_minor="$(python3 -c 'import sys; print(sys.version_info.minor)' 2>/dev/null || echo 0)"
+    if [ "$py_major" -gt 3 ] || { [ "$py_major" -eq 3 ] && [ "$py_minor" -ge 11 ]; }; then
+      return 0
+    fi
   fi
 
   ensure_brew
-  log "Python 3 not found. Installing with Homebrew."
+  log "Python 3.11+ not found. Installing with Homebrew."
   "$BREW_BIN" install python@3.11
 
   local py_prefix
@@ -62,7 +67,7 @@ ensure_python() {
     export PATH="$py_prefix/bin:$PATH"
   fi
 
-  command -v python3 >/dev/null 2>&1 || fail "Python 3 installation failed."
+  command -v python3 >/dev/null 2>&1 || fail "Python 3.11 installation failed."
 }
 
 ensure_node() {

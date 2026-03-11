@@ -43,12 +43,22 @@ uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
 exit /b %errorlevel%
 
 :ensure_python
+set "PY_OK=0"
 where py >nul 2>nul
-if %errorlevel%==0 exit /b 0
-where python >nul 2>nul
-if %errorlevel%==0 exit /b 0
+if %errorlevel%==0 (
+  py -3.11 -c "import sys; raise SystemExit(0 if sys.version_info >= (3, 11) else 1)" >nul 2>nul
+  if !errorlevel!==0 set "PY_OK=1"
+)
+if "!PY_OK!"=="0" (
+  where python >nul 2>nul
+  if %errorlevel%==0 (
+    python -c "import sys; raise SystemExit(0 if sys.version_info >= (3, 11) else 1)" >nul 2>nul
+    if !errorlevel!==0 set "PY_OK=1"
+  )
+)
+if "!PY_OK!"=="1" exit /b 0
 
-call :log Python not found. Trying to install with winget.
+call :log Python 3.11+ not found. Trying to install with winget.
 where winget >nul 2>nul
 if not %errorlevel%==0 call :fail Python is missing and winget is not available. Install Python 3.11+ and run start.bat again.& exit /b 1
 
