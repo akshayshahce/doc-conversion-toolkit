@@ -37,18 +37,18 @@ def pdf_to_images(pdf_path: Path, out_dir: Path, options: PdfToImageOptions) -> 
         doc.close()
 
 
-def _reencode_embedded_images(doc: fitz.Document, quality: int) -> None:
-    for xref in range(1, doc.xref_length()):
-        if doc.xref_get_key(xref, "Subtype")[1] != "/Image":
-            continue
-        try:
-            pix = fitz.Pixmap(doc, xref)
-            if pix.n >= 4:
-                pix = fitz.Pixmap(fitz.csRGB, pix)
-            encoded = pix.tobytes("jpeg", jpg_quality=quality)
-            doc.update_stream(xref, encoded)
-        except Exception:
-            continue
+def _rewrite_embedded_images(doc: fitz.Document, quality: int, dpi_target: int) -> None:
+    doc.rewrite_images(
+        dpi_threshold=max(dpi_target + 1, 72),
+        dpi_target=dpi_target,
+        quality=quality,
+        lossy=True,
+        lossless=True,
+        bitonal=False,
+        color=True,
+        gray=True,
+        set_to_gray=False,
+    )
 
 
 def compress_pdf(
@@ -64,32 +64,33 @@ def compress_pdf(
     if target_reduction_percent:
         target_size = int(original_size * (1 - target_reduction_percent / 100.0))
 
-    candidates: list[tuple[bool, int | None, dict[str, int | bool]]] = []
+    candidates: list[tuple[bool, int | None, int | None, dict[str, int | bool]]] = []
     if mode == PdfCompressionMode.quality_first:
-        candidates = [(False, None, {"garbage": 3, "deflate": True, "clean": True, "incremental": False})]
+        candidates = [(False, None, None, {"garbage": 3, "deflate": True, "clean": True, "incremental": False})]
     elif mode == PdfCompressionMode.light:
-        candidates = [(False, None, {"garbage": 4, "deflate": True, "clean": True, "incremental": False})]
+        candidates = [(True, 90, 220, {"garbage": 4, "deflate": True, "clean": True, "incremental": False})]
     elif mode == PdfCompressionMode.balanced:
-        candidates = [(False, None, {"garbage": 4, "deflate": True, "clean": True, "incremental": False, "use_objstms": 1})]
+        candidates = [(True, 84, 180, {"garbage": 4, "deflate": True, "clean": True, "incremental": False, "use_objstms": 1})]
     else:
-        candidates = [(True, 82, {"garbage": 4, "deflate": True, "clean": True, "incremental": False, "use_objstms": 1})]
+        candidates = [(True, 74, 144, {"garbage": 4, "deflate": True, "clean": True, "incremental": False, "use_objstms": 1})]
 
     if target_reduction_percent or force_reduce_size:
         candidates.extend(
             [
-                (True, 82, {"garbage": 4, "deflate": True, "clean": True, "incremental": False, "use_objstms": 1}),
-                (True, 76, {"garbage": 4, "deflate": True, "clean": True, "incremental": False, "use_objstms": 1}),
-                (True, 70, {"garbage": 4, "deflate": True, "clean": True, "incremental": False, "use_objstms": 1}),
-                (True, 64, {"garbage": 4, "deflate": True, "clean": True, "incremental": False, "use_objstms": 1}),
+                (True, 90, 220, {"garbage": 4, "deflate": True, "clean": True, "incremental": False, "use_objstms": 1}),
+                (True, 84, 180, {"garbage": 4, "deflate": True, "clean": True, "incremental": False, "use_objstms": 1}),
+                (True, 76, 144, {"garbage": 4, "deflate": True, "clean": True, "incremental": False, "use_objstms": 1}),
+                (True, 70, 120, {"garbage": 4, "deflate": True, "clean": True, "incremental": False, "use_objstms": 1}),
+                (True, 64, 96, {"garbage": 4, "deflate": True, "clean": True, "incremental": False, "use_objstms": 1}),
             ]
         )
 
     best_bytes = original_bytes
-    for reencode, quality, save_kwargs in candidates:
+    for rewrite_images, quality, dpi_target, save_kwargs in candidates:
         doc = fitz.open(input_pdf)
         try:
-            if reencode and quality is not None:
-                _reencode_embedded_images(doc, quality)
+            if rewrite_images and quality is not None and dpi_target is not None:
+                _rewrite_embedded_images(doc, quality, dpi_target)
             doc.save(str(output_pdf), **save_kwargs)
         finally:
             doc.close()

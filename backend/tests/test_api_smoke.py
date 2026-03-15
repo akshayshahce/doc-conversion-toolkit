@@ -48,6 +48,15 @@ def _pdf_with_image_bytes() -> bytes:
     return doc.tobytes()
 
 
+def _render_first_page_samples(pdf_bytes: bytes, step: int = 5000) -> list[int]:
+    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+    try:
+        pix = doc.load_page(0).get_pixmap()
+        return list(pix.samples[::step][:200])
+    finally:
+        doc.close()
+
+
 def test_health() -> None:
     response = client.get("/api/health")
     assert response.status_code == 200
@@ -208,6 +217,21 @@ def test_pdf_compress_target_and_force() -> None:
     assert response.status_code == 200
     assert len(response.content) <= len(pdf)
     assert response.headers["x-force-reduce-size"] == "true"
+
+
+def test_pdf_compress_preserves_renderable_output() -> None:
+    pdf = _pdf_with_image_bytes()
+    source_samples = _render_first_page_samples(pdf)
+    response = client.post(
+        "/api/pdf/compress",
+        data={"mode": "strong", "target_reduction_percent": "20", "force_reduce_size": "true"},
+        files=[("file", ("sample.pdf", pdf, "application/pdf"))],
+    )
+    assert response.status_code == 200
+    output_samples = _render_first_page_samples(response.content)
+    assert output_samples[:16] != [255, 216, 255, 224, 0, 16, 74, 70, 73, 70, 0, 1, 1, 0, 0, 1]
+    avg_diff = sum(abs(a - b) for a, b in zip(source_samples, output_samples, strict=False)) / max(1, min(len(source_samples), len(output_samples)))
+    assert avg_diff < 35
 
 
 def test_pdf_merge() -> None:
