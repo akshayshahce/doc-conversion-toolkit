@@ -83,7 +83,7 @@ export default function App() {
 
   const [resizeWidth, setResizeWidth] = useState(1200);
   const [resizeHeight, setResizeHeight] = useState(1200);
-  const [keepAspectRatio, setKeepAspectRatio] = useState(true);
+  const [keepAspectRatio, setKeepAspectRatio] = useState(false);
 
   const [pageSize, setPageSize] = useState('original');
   const [fitPage, setFitPage] = useState(true);
@@ -174,7 +174,7 @@ export default function App() {
               <input className="mt-1 w-full rounded-xl border border-slate-300 bg-transparent p-2 text-slate-900 dark:border-slate-700 dark:text-slate-100" type="number" min={1} value={resizeHeight} onChange={(e) => setResizeHeight(Number(e.target.value || 1))} />
             </label>
             <label className="mt-7 inline-flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={keepAspectRatio} onChange={(e) => setKeepAspectRatio(e.target.checked)} /> Keep aspect ratio
+              <input type="checkbox" checked={keepAspectRatio} onChange={(e) => setKeepAspectRatio(e.target.checked)} /> Keep aspect ratio and fit inside target box
             </label>
           </div>
           <button type="button" disabled={busy || imageFiles.length === 0} className="rounded-xl bg-brand-600 px-4 py-2 text-white disabled:opacity-40" onClick={async () => {

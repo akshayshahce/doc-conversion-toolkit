@@ -150,8 +150,21 @@ def test_image_resize() -> None:
     )
     assert response.status_code == 200
     out = Image.open(io.BytesIO(response.content))
-    assert out.width <= 64
-    assert out.height <= 64
+    assert out.width == 64
+    assert out.height == 64
+
+
+def test_image_resize_exact_dimensions() -> None:
+    data = _image_bytes("PNG")
+    response = client.post(
+        "/api/images/resize",
+        data={"width": "630", "height": "810", "keep_aspect_ratio": "false"},
+        files=[("files", ("sample.png", data, "image/png"))],
+    )
+    assert response.status_code == 200
+    out = Image.open(io.BytesIO(response.content))
+    assert out.width == 630
+    assert out.height == 810
 
 
 def test_images_to_pdf() -> None:

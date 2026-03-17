@@ -61,8 +61,23 @@ def resize_image_bytes(
         format_name = "JPEG" if original_format == "JPG" else original_format
 
         if keep_aspect_ratio:
-            # Fit inside target bounds while preserving source aspect ratio.
-            resized = ImageOps.contain(img, (width, height), Image.Resampling.LANCZOS)
+            # Fit inside target bounds while preserving source aspect ratio,
+            # then pad to the exact target canvas size.
+            contained = ImageOps.contain(img, (width, height), Image.Resampling.LANCZOS)
+            if format_name in {"PNG", "WEBP", "TIFF"}:
+                canvas_mode = "RGBA" if contained.mode in {"RGBA", "LA", "P"} else contained.mode
+                background = (255, 255, 255, 0) if canvas_mode == "RGBA" else 255 if canvas_mode == "L" else (255, 255, 255)
+            else:
+                canvas_mode = "RGB"
+                background = (255, 255, 255)
+
+            fitted = contained.convert(canvas_mode) if contained.mode != canvas_mode else contained
+            resized = Image.new(canvas_mode, (width, height), background)
+            offset = ((width - fitted.width) // 2, (height - fitted.height) // 2)
+            if canvas_mode == "RGBA":
+                resized.paste(fitted, offset, fitted if fitted.mode == "RGBA" else None)
+            else:
+                resized.paste(fitted, offset)
         else:
             resized = img.resize((width, height), Image.Resampling.LANCZOS)
 
