@@ -20,6 +20,7 @@ type ToolKey =
   | 'image-resize'
   | 'image-compress'
   | 'image-pdf'
+  | 'pdf-merge'
   | 'pdf-images'
   | 'pdf-compress'
   | 'pdf-utils';
@@ -37,6 +38,7 @@ const tools: ToolItem[] = [
   { key: 'image-resize', title: 'Image Resize', description: 'Resize with aspect-ratio protection.', icon: <FileImage size={16} />, section: 'Images' },
   { key: 'image-compress', title: 'Image Compression', description: 'Preview-first image compression with compare slider.', icon: <FileArchive size={16} />, section: 'Images' },
   { key: 'image-pdf', title: 'Images to PDF', description: 'Create PDFs from a visible, reorderable image queue.', icon: <FileStack size={16} />, section: 'PDF' },
+  { key: 'pdf-merge', title: 'Merge PDFs', description: 'Combine multiple PDFs in your chosen drag-and-drop order.', icon: <FileStack size={16} />, section: 'PDF' },
   { key: 'pdf-images', title: 'PDF to Images', description: 'Export high-DPI pages as image files.', icon: <FileImage size={16} />, section: 'PDF' },
   { key: 'pdf-compress', title: 'PDF Compression', description: 'Best-effort target compression with honest reporting.', icon: <FileArchive size={16} />, section: 'PDF' },
   { key: 'pdf-utils', title: 'PDF Utilities', description: 'Merge, split, extract, rotate, delete, and reorder.', icon: <FileOutput size={16} />, section: 'PDF' },
@@ -96,7 +98,7 @@ export default function App() {
   const [pdfTargetReduction, setPdfTargetReduction] = useState('');
   const [pdfForceReduce, setPdfForceReduce] = useState(false);
 
-  const [pdfUtilityAction, setPdfUtilityAction] = useState('merge');
+  const [pdfUtilityAction, setPdfUtilityAction] = useState('split');
   const [utilityValue, setUtilityValue] = useState('1-2');
   const [rotateDegrees, setRotateDegrees] = useState(90);
 
@@ -258,6 +260,24 @@ export default function App() {
       );
     }
 
+    if (tool === 'pdf-merge') {
+      return (
+        <>
+          <FileDropzone files={pdfFiles} setFiles={setPdfFiles} accept="application/pdf" multiple />
+          <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-300">
+            Upload multiple PDFs, then drag the cards to arrange the final merge order. The merged file follows the visible top-to-bottom sequence.
+          </div>
+          <button type="button" disabled={busy || pdfFiles.length < 2} className="rounded-xl bg-brand-600 px-4 py-2 text-white disabled:opacity-40" onClick={async () => {
+            const form = new FormData();
+            pdfFiles.forEach((file) => form.append('files', file));
+            await runDownload('/api/pdf/merge', form, 'merged.pdf', pdfFiles);
+          }}>
+            Merge PDFs
+          </button>
+        </>
+      );
+    }
+
     if (tool === 'pdf-compress') {
       return (
         <>
@@ -294,11 +314,10 @@ export default function App() {
 
     return (
       <>
-        <FileDropzone files={pdfFiles} setFiles={setPdfFiles} accept="application/pdf" multiple={pdfUtilityAction === 'merge'} />
+        <FileDropzone files={pdfFiles} setFiles={setPdfFiles} accept="application/pdf" multiple={false} />
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="text-sm font-medium">Action
             <select className="mt-1 w-full rounded-xl border border-slate-300 bg-transparent p-2 text-slate-900 dark:border-slate-700 dark:text-slate-100" value={pdfUtilityAction} onChange={(e) => setPdfUtilityAction(e.target.value)}>
-              <option value="merge">Merge</option>
               <option value="split">Split by ranges</option>
               <option value="extract">Extract pages</option>
               <option value="rotate">Rotate pages</option>
@@ -319,11 +338,6 @@ export default function App() {
         </div>
         <button type="button" disabled={busy || pdfFiles.length === 0} className="rounded-xl bg-brand-600 px-4 py-2 text-white disabled:opacity-40" onClick={async () => {
           const form = new FormData();
-          if (pdfUtilityAction === 'merge') {
-            pdfFiles.forEach((file) => form.append('files', file));
-            await runDownload('/api/pdf/merge', form, 'merged.pdf', pdfFiles);
-            return;
-          }
           form.append('file', pdfFiles[0]);
           if (pdfUtilityAction === 'split') form.append('ranges', utilityValue);
           if (pdfUtilityAction === 'extract') form.append('pages', utilityValue);
